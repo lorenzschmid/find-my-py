@@ -13,9 +13,9 @@ NEOPIXEL_PIN = 5
 # Initialize NeoPixel
 np = NeoPixel(machine.Pin(NEOPIXEL_PIN), 1)
 
-# Setup Passive Network
+# Setup Passive WiFi Network
 u_id = machine.unique_id()
-essid = NETWORK_PREFIX + str(u_id[0]+u_id[1]+100*(u_id[2]+u_id[3]))
+essid = NETWORK_PREFIX + str(int.from_bytes(u_id))
 
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
@@ -24,7 +24,7 @@ ap.config(essid=essid, channel=11)
 print('Opened Network "{}"" on channel {}'.format(
     ap.config('essid'), ap.config('channel')))
 
-# Setup Active Network
+# Setup WiFi for Search
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(True)
 
