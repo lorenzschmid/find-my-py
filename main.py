@@ -1,10 +1,17 @@
 import machine
 import network
+from neopixel import NeoPixel
 
 
+# Parameters
 NETWORK_PREFIX = "find_my_py_"
-MES_AVG = 3
-MES_THRESHOLD = -40
+MEASURE_AVG = 3
+MEASURE_THRESHOLD = -40
+NEOPIXEL_PIN = 5
+
+
+# Initialize NeoPixel
+np = NeoPixel(machine.Pin(NEOPIXEL_PIN), 1)
 
 # Setup Passive Network
 u_id = machine.unique_id()
@@ -26,6 +33,8 @@ print("ap.active: " + str(ap.active()))
 
 
 def find_nodes(active_node=None):
+    '''Return strongest or updated node'''
+
     # Find all find-my-py nodes
     networks = sta_if.scan()
     fmp_nodes = list(
@@ -46,7 +55,13 @@ def find_nodes(active_node=None):
     return active_node
 
 
-# Continous Search
+def set_neopixel(np, color):
+    '''Write color to NeoPixel node'''
+    np[0] = color
+    np.write()
+
+
+# Continuous Search
 active_node = None
 signal_strength = None
 
@@ -55,14 +70,16 @@ while(True):
 
     if active_node:
         if not signal_strength:
-            signal_strength = MES_AVG * [active_node[3]]
+            signal_strength = MEASURE_AVG * [active_node[3]]
         else:
             signal_strength[1:] = signal_strength[:-1]
             signal_strength[0] = active_node[3]
 
-        if signal_strength[0] >= MES_THRESHOLD:
+        if signal_strength[0] >= MEASURE_THRESHOLD:
             print('Partner node found :)')
-            # TODO: green LED
+
+            # Set green LED
+            set_neopixel(np, (0, 255, 0))
 
         else:
             prev_signal_strength = (sum(signal_strength[1:]) /
@@ -71,11 +88,11 @@ while(True):
             getting_closer = (d_signal_strength > 0)
 
             if getting_closer:
-                # TODO: red LED
-                pass
+                # Set red LED
+                set_neopixel(np, (255, 0, 0))
             else:
-                # TODO: blue LED
-                pass
+                # Set blue LED
+                set_neopixel(np, (0, 0, 255))
 
             print(d_signal_strength)
 
@@ -83,4 +100,5 @@ while(True):
         signal_strength = None
         print('No node found :(')
 
-        # TODO: yellow LED
+        # Set yellow LED
+        set_neopixel(np, (255, 255, 0))
