@@ -1,13 +1,14 @@
 import machine
 import network
 from neopixel import NeoPixel
-
+import time
 
 # Parameters
 NETWORK_PREFIX = "find_my_py_"
 MEASURE_AVG = 3
-MEASURE_THRESHOLD = -40
+MEASURE_THRESHOLD = -50
 NEOPIXEL_PIN = 5
+SLEEP_TIME_MS = 500
 
 
 # Initialize NeoPixel
@@ -15,7 +16,7 @@ np = NeoPixel(machine.Pin(NEOPIXEL_PIN), 1)
 
 # Setup Passive WiFi Network
 u_id = machine.unique_id()
-essid = NETWORK_PREFIX + str(int.from_bytes(u_id))
+essid = NETWORK_PREFIX + str(int.from_bytes(u_id, 16))
 
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
@@ -76,7 +77,7 @@ while(True):
             signal_strength[0] = active_node[3]
 
         if signal_strength[0] >= MEASURE_THRESHOLD:
-            print('Partner node found :)')
+            print('Partner node found :)    ' + str(signal_strength[0]))
 
             # Set green LED
             set_neopixel(np, (0, 255, 0))
@@ -87,12 +88,15 @@ while(True):
             d_signal_strength = signal_strength[0] - prev_signal_strength
             getting_closer = (d_signal_strength > 0)
 
-            if getting_closer:
-                # Set red LED
+            if d_signal_strength > 2:
+                # Set red LED when getting closer
                 set_neopixel(np, (255, 0, 0))
-            else:
-                # Set blue LED
+            elif d_signal_strength < -2:
+                # Set blue LED when getting farther away
                 set_neopixel(np, (0, 0, 255))
+            else:
+                # Set purple LED when just found a node or signal didn't varry
+                set_neopixel(np, (155, 0, 255))
 
             print(d_signal_strength)
 
@@ -101,4 +105,6 @@ while(True):
         print('No node found :(')
 
         # Set yellow LED
-        set_neopixel(np, (255, 255, 0))
+        set_neopixel(np, (200, 160, 0))
+
+    time.sleep_ms(SLEEP_TIME_MS)
